@@ -72,13 +72,12 @@ def one_of_k(n):
 
 X, Y = shuffle(mnist.data, mnist.target)
 X = X / 255.0
-my_train_X, my_test_X, my_train_Y, my_test_Y = train_test_split(X, Y, test_size=0.2)
+train_X, test_X, train_y, test_y = train_test_split(X, Y, test_size=0.2)
 
-my_train_Y = np.asarray([one_of_k(x) for x in my_train_Y])
-my_test_Y = np.asarray([one_of_k(x) for x in my_test_Y])
+train_y = np.asarray([one_of_k(x) for x in train_y])
 
-layers = [Layer(len(my_train_X[0]),100,sigmoid,diff_sigmoid),
-          Layer(100,len(my_train_Y[0]),softmax,diff_softmax)]
+layers = [Layer(len(train_X[0]),100,sigmoid,diff_sigmoid),
+          Layer(100,len(train_y[0]),softmax,diff_softmax)]
 
 def train(X,d,eps=1):
     #forward propagation
@@ -108,23 +107,17 @@ def train(X,d,eps=1):
     
     return cost
 
-def test(X,d):
-    #test cost
+def test(X):
     y = fprops(layers,X)
-    cost = np.sum(-d*np.log(y)-(1-d)*np.log(1-y))
-    return cost,y
+    y = np.asarray([np.argmax(x) for x in y])
+    return y
 
-# def main():
-import time
 for epoch in range(100):
-    start = time.clock()
-    my_train_X, my_train_Y = shuffle(my_train_X, my_train_Y)
-    for x, y in zip(my_train_X, my_train_Y):
+    train_X, train_y = shuffle(train_X, train_y)
+    for x, y in zip(train_X, train_y):
          train(x[np.newaxis,:],y[np.newaxis,:],0.01)
-    cost,pred_Y = test(my_test_X,my_test_Y)
-    pred_Y = np.asarray([one_of_k(np.argmax(x)) for x in pred_Y])
-    f1_pred = f1_score(my_test_Y, pred_Y, average='micro')
-    eps = time.clock() - start
-    print "epoc[%03d]:%s %s" % (epoch, f1_pred, eps)
+    pred_y = test(test_X)
+    f1_pred = f1_score(test_y, pred_y, average='micro')
+    print "epoc[%03d]:%s" % (epoch, f1_pred)
 
 
